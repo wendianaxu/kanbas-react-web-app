@@ -1,15 +1,21 @@
+import { useParams } from "react-router";
+import { assignments } from "../../Database";
+
 export default function AssignmentEditor() {
+    const {aid} = useParams();
+    const assignment = assignments.find((assignment) => assignment._id === aid);
+
     return (
         <div id="wd-assignments-editor" className="ms-5">
             <div className="mb-3">
                 <label htmlFor="wd-name" className="form-label">
                     Assignment Name</label>
                 <input className="form-control"
-                    id="wd-name" value="A1" />
+                    id="wd-name" value={assignment?.title} />
             </div>
 
             <textarea id="wd-description" className="form-control mb-3">
-                The assignment is available online Submit a link to the landing page of ...
+                {assignment?.description}
             </textarea>
 
             <form id="wd-assignment-properties">
@@ -17,7 +23,7 @@ export default function AssignmentEditor() {
                     <label htmlFor="wd-points" className="col-sm-2 col-form-label">
                         Points</label>
                     <div className="col-sm-10">
-                        <input className="form-control" id="wd-points" value={100} />
+                        <input className="form-control" id="wd-points" value={assignment?.points} />
                     </div>
                 </div>
                 <div className="row mb-3">
@@ -91,16 +97,16 @@ export default function AssignmentEditor() {
                         </div>
                         <div className="m-3">
                             <label htmlFor="wd-due-date" className="col-form-label fw-bold mb-1">Due</label><br />
-                            <input id="wd-due-date" className="form-control" type="date" value="2024-05-13" />
+                            <input id="wd-due-date" className="form-control" type="datetime-local" value={assignment?.due} />
                         </div>
                         <div className="m-3 d-flex">
                             <div className="flex-fill me-1">
                                 <label htmlFor="wd-available-from" className="col-form-label fw-bold mb-1">Available from</label><br />
-                                <input id="wd-available-from" className="form-control" type="date" value="2024-05-06" />
+                                <input id="wd-available-from" className="form-control" type="datetime-local" value={assignment?.available} />
                             </div>
                             <div className="flex-fill">
                                 <label htmlFor="wd-available-until" className="col-form-label fw-bold mb-1">Available until</label><br />
-                                <input id="wd-available-until" className="form-control" type="date" />
+                                <input id="wd-available-until" className="form-control" type="datetime-local" />
                             </div>
 
                         </div>
