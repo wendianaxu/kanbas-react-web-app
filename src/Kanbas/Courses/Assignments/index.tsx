@@ -11,7 +11,7 @@ export default function Assignments() {
   const { cid } = useParams();
   const assignments = db.assignments;
   const testassignment = assignments.filter((assignment) => assignment.course === cid).filter((assignment) => assignment._id === "A101");
-  console.log(new Date(testassignment[0].due).toDateString());
+
   return (
     <div id="wd-assignments">
       <AssignmentControls />

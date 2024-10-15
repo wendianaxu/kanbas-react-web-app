@@ -1,8 +1,9 @@
 import { useParams } from "react-router";
 import { assignments } from "../../Database";
+import { Link } from "react-router-dom";
 
 export default function AssignmentEditor() {
-    const {aid} = useParams();
+    const {cid, aid} = useParams();
     const assignment = assignments.find((assignment) => assignment._id === aid);
 
     return (
@@ -116,11 +117,14 @@ export default function AssignmentEditor() {
 
             <hr />
             <div className="float-end">
-                <button id="wd-save-btn" className="btn btn-md btn-danger me-2 float-end">
+                <Link id="wd-save-btn" className="btn btn-md btn-danger me-2 float-end"
+                to={`/Kanbas/Courses/${cid}/Assignments`}>
                     Save
-                </button>
-                <button id="wd-cancel-btn" className="btn btn-md btn-secondary me-2 float-end">
-                    Cancel</button>
+                </Link>
+                <Link id="wd-cancel-btn" className="btn btn-md btn-secondary me-2 float-end"
+                to={`/Kanbas/Courses/${cid}/Assignments`}>
+                    Cancel
+                </Link>
             </div>
 
 
