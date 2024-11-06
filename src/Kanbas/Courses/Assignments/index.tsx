@@ -6,11 +6,13 @@ import { BsGripVertical } from "react-icons/bs";
 import { TbFilePencil } from "react-icons/tb";
 import { useParams } from "react-router";
 import * as db from "../../Database";
+import { useSelector, useDispatch } from "react-redux";
+import { deleteAssignment } from "./reducer";
 
 export default function Assignments() {
   const { cid } = useParams();
-  const assignments = db.assignments;
-  const testassignment = assignments.filter((assignment) => assignment.course === cid).filter((assignment) => assignment._id === "A101");
+  const { assignments } = useSelector((state: any) => state.assignmentsReducer);
+  const dispatch = useDispatch();
 
   return (
     <div id="wd-assignments">
@@ -24,11 +26,11 @@ export default function Assignments() {
           <AssignmentsButtons />
         </div>
         {assignments
-          .filter((assignment) => assignment.course === cid)
-          .map((assignment) => (
-            <li 
-            key={assignment._id}
-            className="wd-assignment-list-item list-group-item p-0 fs-5 border-gray d-flex align-items-center">
+          .filter((assignment: any) => assignment.course === cid)
+          .map((assignment: any) => (
+            <li
+              key={assignment._id}
+              className="wd-assignment-list-item list-group-item p-0 fs-5 border-gray d-flex align-items-center">
               <BsGripVertical className="ms-1 me-2 fs-2" />
               <TbFilePencil className="me-2 fs-2 text-success" />
               <div className="m-3">
@@ -36,14 +38,17 @@ export default function Assignments() {
                   href={`#/Kanbas/Courses/${cid}/Assignments/${assignment._id}`}>
                   {assignment.title}
                 </a>
-                <p className="fs-6"><span className="text-danger">Multiple Modules</span> | 
-                <strong> Not available until </strong> 
-                {assignment.available.split("T")[0]} at {assignment.available.split("T")[1]} |
-                  <strong> Due </strong> 
+                <p className="fs-6"><span className="text-danger">Multiple Modules</span> |
+                  <strong> Not available until </strong>
+                  {assignment.availableFrom.split("T")[0]} at {assignment.availableFrom.split("T")[1]} |
+                  <strong> Due </strong>
                   {assignment.due.split("T")[0]} at {assignment.due.split("T")[1]} |
                   &nbsp;{assignment.points} pts</p>
               </div>
-              <A1Buttons />
+              <A1Buttons assignmentId={assignment._id}
+                deleteAssignment={(assignmentId) => {
+                  dispatch(deleteAssignment(assignmentId));
+                }} />
             </li>
           ))}
 
