@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import * as db from "./Database";
-import React, { useState } from "react";
+// import * as db from "./Database";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import FacultyProtectedRoute from "./Account/FacultyProtectedRoute";
 import StudentProtectedRoute from "./Account/StudentProtectedRoute";
-import { addEnrollment, deleteEnrollment } from "./EnrollmentsReducer";
-import { AnyARecord } from "dns";
+import { addEnrollment, deleteEnrollment, setEnrollments, setShowEnrolledOnly } from "./EnrollmentsReducer";
+import * as enrollmentsClient from "./client";
 
 export default function Dashboard(
   { courses, course, setCourse, addNewCourse,
@@ -16,17 +16,24 @@ export default function Dashboard(
     }) {
 
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const { enrollments } = useSelector((state: any) => state.enrollmentsReducer);
-
-  const [showEnrolledOnly, setShowEnrolledOnly] = useState(false); // state variable indicating if only enrolled courses are shown
-
-  const toggleEnrollmentView = () => {
-    setShowEnrolledOnly(!showEnrolledOnly);
-  };
-
+  const { enrollments, showEnrolledOnly } = useSelector((state: any) => state.enrollmentsReducer);
   const dispatch = useDispatch();
 
-  const [enrollmentStatus, setEnrollmentStatus] = useState( // state variable for the enrollment status of each course
+  const fetchEnrollments = async () => { // fetch enrollments for current user from the server and set them in the store
+    const enrollments = await enrollmentsClient.findEnrollments(currentUser._id as string);
+    dispatch(setEnrollments(enrollments));
+  };
+  useEffect(() => {
+    fetchEnrollments();
+  }, [currentUser]);
+
+  //const [showEnrolledOnly, setShowEnrolledOnly] = useState(false); // state variable indicating if only enrolled courses are shown
+
+  const toggleEnrollmentView = () => {
+    dispatch(setShowEnrolledOnly(!showEnrolledOnly)); 
+  };
+
+/*   const [enrollmentStatus, setEnrollmentStatus] = useState( // state variable for the enrollment status of each course
     courses.reduce((status, course) => {
       status[course._id] = enrollments.some(
         (enrollment: any) =>
@@ -34,20 +41,41 @@ export default function Dashboard(
       );
       return status;
     }, {})
-  );
+  ); */
+
+  const enrollmentStatus = courses.reduce((status, course) => { // dynamically calculate enrollment status of each course
+    status[course._id] = enrollments.some(
+      (enrollment: any) =>
+        enrollment.user === currentUser._id && enrollment.course === course._id
+    );
+    return status;
+  }, {});
+
+  const handleAddEnrollment = async (courseId: any) => {
+    await enrollmentsClient.enrollUser(courseId, currentUser._id); // enroll user on the server
+    dispatch(addEnrollment({ user: currentUser._id, course: courseId })); // add enrollment to the store
+    fetchEnrollments();
+  }
+
+  const handleDeleteEnrollment = async (courseId: any) => {
+    await enrollmentsClient.unenrollUser(courseId, currentUser._id); // unenroll user on the server
+    dispatch(deleteEnrollment({ user: currentUser._id, course: courseId })); // delete enrollment from the store
+    fetchEnrollments();
+  }
 
   const toggleEnrollment = (courseId: any) => { // toggle enrollment status of a course
     const isEnrolled = enrollmentStatus[courseId];
     if (isEnrolled) {
-      dispatch(deleteEnrollment({ user: currentUser._id, course: courseId }));
+      handleDeleteEnrollment(courseId);
     } else {
-      dispatch(addEnrollment({ user: currentUser._id, course: courseId }));
+      handleAddEnrollment(courseId);
     }
-    setEnrollmentStatus({
+/*     setEnrollmentStatus({
       ...enrollmentStatus,
       [courseId]: !isEnrolled,
-    });
+    }); */
   };
+
 
   return (
     <div id="wd-dashboard">
@@ -81,7 +109,7 @@ export default function Dashboard(
 
       <h2 id="wd-dashboard-published">{
         showEnrolledOnly ? `Enrolled Courses (${enrollments.filter((enrollment: any) => enrollment.user === currentUser._id).length})`
-        : `Published Courses (${courses.length})`
+          : `Published Courses (${courses.length})`
       }</h2> <hr />
       <div id="wd-dashboard-courses" className="row">
         <div className="row row-cols-1 row-cols-md-5 g-4">
