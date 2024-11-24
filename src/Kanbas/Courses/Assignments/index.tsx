@@ -5,33 +5,14 @@ import { RxTriangleDown } from "react-icons/rx";
 import { BsGripVertical } from "react-icons/bs";
 import { TbFilePencil } from "react-icons/tb";
 import { useParams } from "react-router";
-// import * as db from "../../Database";
+import * as db from "../../Database";
 import { useSelector, useDispatch } from "react-redux";
-import { deleteAssignment, setAssignments } from "./reducer";
-
-import * as coursesClient from "../client";
-import * as assignmentsClient from "./client";
-import { useEffect, useState } from "react";
-
+import { deleteAssignment } from "./reducer";
 
 export default function Assignments() {
   const { cid } = useParams();
   const { assignments } = useSelector((state: any) => state.assignmentsReducer);
   const dispatch = useDispatch();
-
-  const fetchAssignments = async () => {
-    const assignments = await coursesClient.findAssignmentsForCourse(cid as string);
-    dispatch(setAssignments(assignments));
-  };
-  useEffect(() => { // fetch the assignments when the component mounts
-    fetchAssignments();
-  }, []);
-
-  const removeAssignment = async (assignmentId: string) => {
-    await assignmentsClient.deleteAssignment(assignmentId); // delete assignment on the server
-    dispatch(deleteAssignment(assignmentId)); // delete the assignment from the store
-  };
- 
 
   return (
     <div id="wd-assignments">
@@ -45,7 +26,7 @@ export default function Assignments() {
           <AssignmentsButtons />
         </div>
         {assignments
-          //.filter((assignment: any) => assignment.course === cid)
+          .filter((assignment: any) => assignment.course === cid)
           .map((assignment: any) => (
             <li
               key={assignment._id}
@@ -65,7 +46,9 @@ export default function Assignments() {
                   &nbsp;{assignment.points} pts</p>
               </div>
               <A1Buttons assignmentId={assignment._id}
-                deleteAssignment={(assignmentId) => removeAssignment(assignmentId)} />
+                deleteAssignment={(assignmentId) => {
+                  dispatch(deleteAssignment(assignmentId));
+                }} />
             </li>
           ))}
 
