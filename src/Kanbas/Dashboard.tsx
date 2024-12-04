@@ -9,39 +9,42 @@ import * as enrollmentsClient from "./client";
 
 export default function Dashboard(
   { courses, course, setCourse, addNewCourse,
-    deleteCourse, updateCourse }: {
+    deleteCourse, updateCourse, enrolling, setEnrolling, updateEnrollment }: {
       courses: any[]; course: any; setCourse: (course: any) => void;
       addNewCourse: () => void; deleteCourse: (course: any) => void;
       updateCourse: () => void;
+      enrolling: boolean;
+      setEnrolling: (enrolling: boolean) => void;
+      updateEnrollment: (courseId: string, enrolled: boolean) => void
     }) {
 
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { enrollments, showEnrolledOnly } = useSelector((state: any) => state.enrollmentsReducer);
   const dispatch = useDispatch();
 
-  const fetchEnrollments = async () => { // fetch enrollments for current user from the server and set them in the store
+/*   const fetchEnrollments = async () => { // fetch enrollments for current user from the server and set them in the store
     const enrollments = await enrollmentsClient.findEnrollments(currentUser._id as string);
     dispatch(setEnrollments(enrollments));
   };
   useEffect(() => {
     fetchEnrollments();
-  }, [currentUser]);
+  }, [currentUser]); */
 
   //const [showEnrolledOnly, setShowEnrolledOnly] = useState(false); // state variable indicating if only enrolled courses are shown
 
   const toggleEnrollmentView = () => {
-    dispatch(setShowEnrolledOnly(!showEnrolledOnly)); 
+    dispatch(setShowEnrolledOnly(!showEnrolledOnly));
   };
 
-/*   const [enrollmentStatus, setEnrollmentStatus] = useState( // state variable for the enrollment status of each course
-    courses.reduce((status, course) => {
-      status[course._id] = enrollments.some(
-        (enrollment: any) =>
-          enrollment.user === currentUser._id && enrollment.course === course._id
-      );
-      return status;
-    }, {})
-  ); */
+  /*   const [enrollmentStatus, setEnrollmentStatus] = useState( // state variable for the enrollment status of each course
+      courses.reduce((status, course) => {
+        status[course._id] = enrollments.some(
+          (enrollment: any) =>
+            enrollment.user === currentUser._id && enrollment.course === course._id
+        );
+        return status;
+      }, {})
+    ); */
 
   const enrollmentStatus = courses.reduce((status, course) => { // dynamically calculate enrollment status of each course
     status[course._id] = enrollments.some(
@@ -51,36 +54,38 @@ export default function Dashboard(
     return status;
   }, {});
 
-  const handleAddEnrollment = async (courseId: any) => {
+/*   const handleAddEnrollment = async (courseId: any) => {
     await enrollmentsClient.enrollUser(courseId, currentUser._id); // enroll user on the server
     dispatch(addEnrollment({ user: currentUser._id, course: courseId })); // add enrollment to the store
     fetchEnrollments();
-  }
+  } */
 
-  const handleDeleteEnrollment = async (courseId: any) => {
+/*   const handleDeleteEnrollment = async (courseId: any) => {
     await enrollmentsClient.unenrollUser(courseId, currentUser._id); // unenroll user on the server
     dispatch(deleteEnrollment({ user: currentUser._id, course: courseId })); // delete enrollment from the store
     fetchEnrollments();
-  }
+  } */
 
-  const toggleEnrollment = (courseId: any) => { // toggle enrollment status of a course
+/*   const toggleEnrollment = (courseId: any) => { // toggle enrollment status of a course
     const isEnrolled = enrollmentStatus[courseId];
     if (isEnrolled) {
       handleDeleteEnrollment(courseId);
     } else {
       handleAddEnrollment(courseId);
     }
-/*     setEnrollmentStatus({
-      ...enrollmentStatus,
-      [courseId]: !isEnrolled,
-    }); */
-  };
+    setEnrollmentStatus({
+          ...enrollmentStatus,
+          [courseId]: !isEnrolled,
+        }); 
+  }; */
 
 
   return (
     <div id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
-
+      <button onClick={() => setEnrolling(!enrolling)} className="float-end btn btn-primary" >
+        {enrolling ? "My Courses" : "All Courses"}
+      </button>
       <FacultyProtectedRoute>
         <h5>New Course
           <button className="btn btn-primary float-end" /* add new course */
@@ -100,12 +105,12 @@ export default function Dashboard(
         <hr />
       </FacultyProtectedRoute>
 
-      <StudentProtectedRoute>
-        <button className="btn btn-primary float-end" /* enrollment button */
+{/*       <StudentProtectedRoute>
+        <button className="btn btn-primary float-end" 
           id="wd-enrollment-btn"
           onClick={toggleEnrollmentView} >
           {showEnrolledOnly ? "Show all courses" : "Show enrolled courses"} </button>
-      </StudentProtectedRoute>
+      </StudentProtectedRoute> */}
 
       <h2 id="wd-dashboard-published">{
         showEnrolledOnly ? `Enrolled Courses (${enrollments.filter((enrollment: any) => enrollment.user === currentUser._id).length})`
@@ -114,20 +119,29 @@ export default function Dashboard(
       <div id="wd-dashboard-courses" className="row">
         <div className="row row-cols-1 row-cols-md-5 g-4">
           {courses
-            .filter((course) => !showEnrolledOnly || // don't filter by enrollment if showEnrolledOnly is false
-              enrollments.some( // returns true if at least one element in the enrollments array matches the current user and course
-                (enrollment: any) =>
-                  enrollment.user === currentUser._id &&
-                  enrollment.course === course._id
-              ))
+            /*  .filter((course) => !showEnrolledOnly || // don't filter by enrollment if showEnrolledOnly is false
+               enrollments.some( // returns true if at least one element in the enrollments array matches the current user and course
+                 (enrollment: any) =>
+                   enrollment.user === currentUser._id &&
+                   enrollment.course === course._id
+               )) */
             .map((course) => (
               <div className="wd-dashboard-course col" style={{ width: "300px" }}>
                 <div className="card rounded-3 overflow-hidden">
-                  <Link to={enrollmentStatus[course._id] ? `/Kanbas/Courses/${course._id}/Home` : "#"} // navigate to course only when enrolled
+                  <Link to={`/Kanbas/Courses/${course._id}/Home`}
                     className="wd-dashboard-course-link text-decoration-none text-dark" >
                     <img src="/images/reactjs.jpg" width="100%" height={160} />
                     <div className="card-body">
                       <h5 className="wd-dashboard-course-title card-title">
+                        {enrolling && (
+                          <button className={`btn ${course.enrolled ? "btn-danger" : "btn-success"} float-end`} 
+                          onClick={(event) => {
+                            event.preventDefault();
+                            updateEnrollment(course._id, !course.enrolled);
+                          }}>
+                            {course.enrolled ? "Unenroll" : "Enroll"}
+                          </button>
+                        )}
                         {course.name} </h5>
                       <p className="wd-dashboard-course-title card-text overflow-y-hidden" style={{ maxHeight: 100 }}>
                         {course.description} </p>
@@ -153,13 +167,13 @@ export default function Dashboard(
                       </FacultyProtectedRoute>
 
                       <StudentProtectedRoute> {/* enrollment button */}
-                        <button id="wd-enroll-btn"
+                        {/* <button id="wd-enroll-btn"
                           onClick={(event) => {
                             event.preventDefault();
                             toggleEnrollment(course._id);
                           }} className={`btn float-end ${enrollmentStatus[course._id] ? "btn-danger" : "btn-success"}`}>
                           {enrollmentStatus[course._id] ? "Unenroll" : "Enroll"}
-                        </button>
+                        </button> */}
                       </StudentProtectedRoute>
                     </div>
                   </Link>

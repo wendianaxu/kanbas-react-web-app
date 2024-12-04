@@ -2,6 +2,8 @@ import { FaUserCircle } from "react-icons/fa";
 import * as client from "../../Account/client";
 import PeopleDetails from "./Details";
 import { Link } from "react-router-dom";
+import { findUsersForCourse } from "../client";
+import * as courseClient from "../client";
 /* import { useParams } from "react-router-dom";
 import * as db from "../../Database"; */
 
